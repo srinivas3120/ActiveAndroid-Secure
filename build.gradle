@@ -1,0 +1,103 @@
+apply plugin: 'com.android.library'
+
+buildscript {
+  repositories {
+    jcenter()
+  }
+  dependencies {
+    classpath 'com.android.tools.build:gradle:1.1.0'
+  }
+}
+
+repositories {
+  jcenter()
+  maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
+}
+
+
+def getVersionCode = { ->
+  try {
+    def code = new ByteArrayOutputStream()
+    exec {
+      commandLine 'git', 'tag', '--list'
+      standardOutput = code
+    }
+    return code.toString().split("\n").size()
+  } catch (ignored) {
+    return -1;
+  }
+}
+
+def getVersionName = { ->
+  try {
+    def stdout = new ByteArrayOutputStream()
+    exec {
+      commandLine 'git', 'describe', '--tags'
+      standardOutput = stdout
+    }
+    return stdout.toString().replaceAll("^v", "").trim()
+  } catch (ignored) {
+    return "undefined";
+  }
+}
+
+android {
+  compileSdkVersion 21
+  buildToolsVersion "21.1.2"
+
+  sourceSets {
+    tests {
+      manifest.srcFile 'src/androidTest/AndroidManifest.xml'
+      java.srcDir 'src/androidTest/src'
+      res.srcDir 'src/androidTest/res'
+      assets.srcDir 'src/androidTest/assets'
+      resources.srcDir 'src/androidTest/src'
+      aidl.srcDir 'src/androidTest/src'
+    }
+  }
+
+  defaultConfig {
+    minSdkVersion 15
+    targetSdkVersion 21
+    versionCode getVersionCode()
+    versionName getVersionName()
+
+    testApplicationId "com.activeandroid.test"
+    testInstrumentationRunner "android.test.InstrumentationTestRunner"
+  }
+  buildTypes {
+    debug {
+      minifyEnabled false
+      proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+    }
+    release {
+      minifyEnabled false
+      proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+    }
+  }
+
+  compileOptions {
+    sourceCompatibility JavaVersion.VERSION_1_7
+    targetCompatibility JavaVersion.VERSION_1_7
+  }
+}
+
+dependencies {
+  compile 'com.android.support:support-v4:22.2.1'
+  compile 'net.zetetic:android-database-sqlcipher:3.5.3@aar'
+  compile fileTree(dir: 'libs', include: '*.jar')
+}
+
+// This is the actual solution, as in http://stackoverflow.com/a/19037807/1002054
+task clearJar(type: Delete) {
+  delete 'release/activeandroid-3.1-beta.jar'
+}
+
+task makeJar(type: Copy) {
+  from ('build/intermediates/bundles/release/')
+  into ('release/')
+  include ('classes.jar')
+  rename('classes.jar', 'activeandroid-3.1-beta.jar')
+}
+
+makeJar.dependsOn(clearJar, build)
