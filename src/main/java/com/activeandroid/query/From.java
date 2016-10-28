@@ -7,9 +7,6 @@ package com.activeandroid.query;
 
 import com.activeandroid.Cache;
 import com.activeandroid.Model;
-import com.activeandroid.query.Join;
-import com.activeandroid.query.Select;
-import com.activeandroid.query.Sqlable;
 import com.activeandroid.query.Join.JoinType;
 import com.activeandroid.util.SQLiteUtils;
 import java.util.ArrayList;
@@ -126,7 +123,7 @@ public final class From implements Sqlable {
   public String toSql() {
     String sql = "";
     sql = sql + this.mQueryBase.toSql();
-    sql = sql + "FROM " + Cache.getTableName(this.mType) + " ";
+    sql = sql + "FROM " + Cache.getTableNameWithDb(mType) + " ";
     if(this.mAlias != null) {
       sql = sql + "AS " + this.mAlias + " ";
     }

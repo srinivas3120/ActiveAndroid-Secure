@@ -17,12 +17,11 @@ package com.activeandroid;
  */
 
 import android.content.Context;
-
 import com.activeandroid.util.Log;
-
 import net.sqlcipher.database.SQLiteDatabase;
 
 public final class ActiveAndroid {
+  public static String SEC_DB_ALIAS = DbLang.dbEng.name();
 	//////////////////////////////////////////////////////////////////////////////////////
 	// PUBLIC METHODS
 	//////////////////////////////////////////////////////////////////////////////////////
@@ -43,6 +42,7 @@ public final class ActiveAndroid {
 		// Set logging enabled first
 		setLoggingEnabled(loggingEnabled);
 		Cache.initialize(configuration);
+
 	}
 
 	public static void clearCache() {
@@ -62,15 +62,27 @@ public final class ActiveAndroid {
 	}
 
 	public static void beginTransaction() {
-		Cache.openDatabase().beginTransaction();
+		try {
+			Cache.openDatabase().beginTransaction();
+		}catch (Exception e){
+			e.printStackTrace();
+		}
 	}
 
 	public static void endTransaction() {
-		Cache.openDatabase().endTransaction();
+		try {
+			Cache.openDatabase().endTransaction();
+		}catch (Exception e){
+			e.printStackTrace();
+		}
 	}
 
 	public static void setTransactionSuccessful() {
-		Cache.openDatabase().setTransactionSuccessful();
+		try {
+			Cache.openDatabase().setTransactionSuccessful();
+		}catch (Exception e){
+			e.printStackTrace();
+		}
 	}
 
 	public static boolean inTransaction() {
@@ -84,4 +96,38 @@ public final class ActiveAndroid {
 	public static void execSQL(String sql, Object[] bindArgs) {
 		Cache.openDatabase().execSQL(sql, bindArgs);
 	}
+
+  public static void setSecDb(DbLang alias){
+    SEC_DB_ALIAS=alias.name();
+  }
+  public static void attachDb(String path, DbLang alias) {
+    attachDb(path,"",alias);
+  }
+
+  public static void attachDb(String path, String password,DbLang alias) {
+    try {
+			Log.i("before detach");
+      detachDb(alias);
+			Log.i("after detach");
+      Cache.openDatabase().execSQL("ATTACH DATABASE '" + path + "' AS "+alias+" KEY '" + password + "'");
+			Log.i("attached successfully");
+    } catch (Exception e) {
+			Log.i("attach failed");
+      e.printStackTrace();
+    }
+  }
+
+  public static void detachDb(DbLang alias) {
+    try {
+      Cache.openDatabase().execSQL("DETACH DATABASE "+alias);
+    } catch (Exception e) {
+			Log.i("detachDb exception");
+      e.printStackTrace();
+    }
+  }
+
+  public enum DbLang {
+    dbEng , dbHi
+  }
+
 }

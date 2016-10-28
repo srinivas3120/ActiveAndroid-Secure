@@ -26,6 +26,8 @@ import java.lang.annotation.Target;
 public @interface Table {
 
 	public static final String DEFAULT_ID_NAME = "Id";
+	public static final boolean DEFAULT_PRIMARY =true;
 	public String name();
+	public boolean primary() default DEFAULT_PRIMARY;
 	public String id() default DEFAULT_ID_NAME;
 }

@@ -16,6 +16,12 @@ package com.activeandroid.util;
  * limitations under the License.
  */
 
+import android.content.Context;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
+import com.activeandroid.Model;
+import com.activeandroid.annotation.Column;
+import com.activeandroid.serializer.TypeSerializer;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.Arrays;
@@ -23,14 +29,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.Set;
-
-import android.content.Context;
-import android.content.pm.ApplicationInfo;
-import android.content.pm.PackageManager;
-
-import com.activeandroid.Model;
-import com.activeandroid.annotation.Column;
-import com.activeandroid.serializer.TypeSerializer;
 
 public final class ReflectionUtils {
 	//////////////////////////////////////////////////////////////////////////////////////

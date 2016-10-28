@@ -16,6 +16,13 @@ package com.activeandroid;
  * limitations under the License.
  */
 
+import android.content.Context;
+import android.text.TextUtils;
+import com.activeandroid.util.IOUtils;
+import com.activeandroid.util.Log;
+import com.activeandroid.util.NaturalOrderComparator;
+import com.activeandroid.util.SQLiteUtils;
+import com.activeandroid.util.SqlParser;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -27,16 +34,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-
-import android.content.Context;
-import android.text.TextUtils;
-
-import com.activeandroid.util.IOUtils;
-import com.activeandroid.util.Log;
-import com.activeandroid.util.NaturalOrderComparator;
-import com.activeandroid.util.SQLiteUtils;
-import com.activeandroid.util.SqlParser;
-
 import net.sqlcipher.database.SQLiteDatabase;
 import net.sqlcipher.database.SQLiteOpenHelper;
 
@@ -46,12 +43,13 @@ public final class DatabaseHelper extends SQLiteOpenHelper {
 	//////////////////////////////////////////////////////////////////////////////////////
 
 	public final static String MIGRATION_PATH = "migrations";
+	private String migrationPath=MIGRATION_PATH;
 
 	//////////////////////////////////////////////////////////////////////////////////////
     // PRIVATE FIELDS
     //////////////////////////////////////////////////////////////////////////////////////
 
-    private final String mSqlParser;
+	private final String mSqlParser;
 
 	//////////////////////////////////////////////////////////////////////////////////////
 	// CONSTRUCTORS
@@ -62,6 +60,14 @@ public final class DatabaseHelper extends SQLiteOpenHelper {
 		Log.i("super DatabaseHelper "+configuration.getDatabaseName()+":"+ configuration.getDatabaseVersion());
 		copyAttachedDatabase(configuration.getContext(), configuration.getDatabaseName());
 		mSqlParser = configuration.getSqlParser();
+	}
+
+	public DatabaseHelper(Context context, String databaseName, int databaseVersion, String sqlParser, String migrationPath) {
+		super(context, databaseName, null, databaseVersion);
+		Log.i("super DatabaseHelper "+databaseName+":"+ databaseVersion);
+		copyAttachedDatabase(context, databaseName);
+		mSqlParser = sqlParser;
+		this.migrationPath= migrationPath;
 	}
 
 	//////////////////////////////////////////////////////////////////////////////////////
@@ -76,20 +82,16 @@ public final class DatabaseHelper extends SQLiteOpenHelper {
 	@Override
 	public void onCreate(SQLiteDatabase db) {
 		executePragmas(db);
-		Log.i("after onCreate executePragmas");
 		executeCreate(db);
-		Log.i("after onCreate executeCreate");
 		try {
-			Log.i("1. "+Cache.getContext().getAssets().toString());
-			Log.i("1. "+Arrays.toString(Cache.getContext().getAssets().list(MIGRATION_PATH)));
+			Log.i("1. "+ Cache.getContext().getAssets().toString());
+			Log.i("1. "+Arrays.toString(Cache.getContext().getAssets().list(migrationPath)));
 		} catch (IOException e) {
 			e.printStackTrace();
 			Log.i("Cache.getContext().getAssets() exception");
 		}
 		executeMigrations(db, -1, db.getVersion());
-		Log.i("after onCreate executeMigrations: getVersion: "+db.getVersion());
 		executeCreateIndex(db);
-		Log.i("after onCreate executeCreateIndex");
 	}
 
 	@Override
@@ -153,7 +155,11 @@ public final class DatabaseHelper extends SQLiteOpenHelper {
 
 			while(var3.hasNext()) {
 				TableInfo tableInfo = (TableInfo)var3.next();
-				db.execSQL(SQLiteUtils.createTableDefinition(tableInfo));
+				if(migrationPath.equals(MIGRATION_PATH) && tableInfo.isPrimary()){
+					db.execSQL(SQLiteUtils.createTableDefinition(tableInfo));
+				}else if(!migrationPath.equals(MIGRATION_PATH) && !tableInfo.isPrimary()){
+					db.execSQL(SQLiteUtils.createTableDefinition(tableInfo));
+				}
 			}
 			db.setTransactionSuccessful();
 		}
@@ -166,7 +172,11 @@ public final class DatabaseHelper extends SQLiteOpenHelper {
 		db.beginTransaction();
 		try {
 			for (TableInfo tableInfo : Cache.getTableInfos()) {
-				db.execSQL(SQLiteUtils.createTableDefinition(tableInfo));
+				if(migrationPath.equals(MIGRATION_PATH) && tableInfo.isPrimary()){
+					db.execSQL(SQLiteUtils.createTableDefinition(tableInfo));
+				}else if(!migrationPath.equals(MIGRATION_PATH) && !tableInfo.isPrimary()){
+					db.execSQL(SQLiteUtils.createTableDefinition(tableInfo));
+				}
 			}
 			db.setTransactionSuccessful();
 		}
@@ -178,7 +188,7 @@ public final class DatabaseHelper extends SQLiteOpenHelper {
 	private boolean executeMigrations(SQLiteDatabase db, int oldVersion, int newVersion) {
 		boolean migrationExecuted = false;
 		try {
-			final List<String> files = Arrays.asList(Cache.getContext().getAssets().list(MIGRATION_PATH));
+			final List<String> files = Arrays.asList(Cache.getContext().getAssets().list(migrationPath));
 			Collections.sort(files, new NaturalOrderComparator());
 
 			db.beginTransaction();
@@ -216,7 +226,7 @@ public final class DatabaseHelper extends SQLiteOpenHelper {
 	    InputStream stream = null;
 
 		try {
-		    stream = Cache.getContext().getAssets().open(MIGRATION_PATH + "/" + file);
+		    stream = Cache.getContext().getAssets().open(migrationPath + "/" + file);
 
 		    if (Configuration.SQL_PARSER_DELIMITED.equalsIgnoreCase(mSqlParser)) {
 		        executeDelimitedSqlScript(db, stream);

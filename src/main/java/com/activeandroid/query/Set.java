@@ -17,7 +17,6 @@ package com.activeandroid.query;
  */
 
 import com.activeandroid.util.SQLiteUtils;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;

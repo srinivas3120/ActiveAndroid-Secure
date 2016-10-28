@@ -16,6 +16,15 @@ package com.activeandroid;
  * limitations under the License.
  */
 
+import android.content.Context;
+import com.activeandroid.serializer.CalendarSerializer;
+import com.activeandroid.serializer.FileSerializer;
+import com.activeandroid.serializer.SqlDateSerializer;
+import com.activeandroid.serializer.TypeSerializer;
+import com.activeandroid.serializer.UtilDateSerializer;
+import com.activeandroid.util.Log;
+import com.activeandroid.util.ReflectionUtils;
+import dalvik.system.DexFile;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
@@ -26,17 +35,6 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import android.content.Context;
-
-import com.activeandroid.serializer.CalendarSerializer;
-import com.activeandroid.serializer.SqlDateSerializer;
-import com.activeandroid.serializer.TypeSerializer;
-import com.activeandroid.serializer.UtilDateSerializer;
-import com.activeandroid.serializer.FileSerializer;
-import com.activeandroid.util.Log;
-import com.activeandroid.util.ReflectionUtils;
-import dalvik.system.DexFile;
 
 final class ModelInfo {
 	//////////////////////////////////////////////////////////////////////////////////////
@@ -49,7 +47,7 @@ final class ModelInfo {
 			put(Calendar.class, new CalendarSerializer());
 			put(java.sql.Date.class, new SqlDateSerializer());
 			put(java.util.Date.class, new UtilDateSerializer());
-			put(java.io.File.class, new FileSerializer());
+			put(File.class, new FileSerializer());
 		}
 	};
 

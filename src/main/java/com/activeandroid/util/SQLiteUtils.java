@@ -6,28 +6,26 @@
 package com.activeandroid.util;
 
 import android.database.Cursor;
-import android.os.Build.VERSION;
 import android.text.TextUtils;
 import com.activeandroid.Cache;
 import com.activeandroid.Model;
 import com.activeandroid.TableInfo;
 import com.activeandroid.annotation.Column;
 import com.activeandroid.serializer.TypeSerializer;
-import com.activeandroid.util.Log;
-import com.activeandroid.util.ReflectionUtils;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import net.sqlcipher.database.SQLiteDatabase;
 
 public final class SQLiteUtils {
 	public static final boolean FOREIGN_KEYS_SUPPORTED;
-	private static final HashMap<Class<?>, SQLiteUtils.SQLiteType> TYPE_MAP;
+	private static final HashMap<Class<?>, SQLiteType> TYPE_MAP;
 
 	static {
-		FOREIGN_KEYS_SUPPORTED = VERSION.SDK_INT >= 8;
+		FOREIGN_KEYS_SUPPORTED = false;
 		TYPE_MAP = new HashMap() {
 			{
 				this.put(Byte.TYPE, SQLiteUtils.SQLiteType.INTEGER);
@@ -63,7 +61,8 @@ public final class SQLiteUtils {
 	}
 
 	public static <T extends Model> List<T> rawQuery(Class<? extends Model> type, String sql, String[] selectionArgs) {
-		Cursor cursor = Cache.openDatabase().rawQuery(sql, selectionArgs);
+		SQLiteDatabase db= Cache.openDatabase();
+		Cursor cursor = db.rawQuery(sql, selectionArgs);
 		List entities = processCursor(type, cursor);
 		cursor.close();
 		return entities;

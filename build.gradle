@@ -84,7 +84,7 @@ android {
 
 dependencies {
   compile 'com.android.support:support-v4:22.2.1'
-  compile 'net.zetetic:android-database-sqlcipher:3.5.3@aar'
+  compile 'net.zetetic:android-database-sqlcipher:3.5.4@aar'
   compile fileTree(dir: 'libs', include: '*.jar')
 }
 

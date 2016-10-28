@@ -23,7 +23,6 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
-
 public class SqlParser {
 
     public final static int STATE_NONE          = 0;

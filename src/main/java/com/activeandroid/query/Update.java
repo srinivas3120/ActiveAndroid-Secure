@@ -42,7 +42,7 @@ public final class Update implements Sqlable {
 	public String toSql() {
 		StringBuilder sql = new StringBuilder();
 		sql.append("UPDATE ");
-		sql.append(Cache.getTableName(mType));
+		sql.append(Cache.getTableNameWithDb(mType));
 		sql.append(" ");
 
 		return sql.toString();

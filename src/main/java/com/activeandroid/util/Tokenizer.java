@@ -20,7 +20,6 @@ package com.activeandroid.util;
 import java.io.IOException;
 import java.io.InputStream;
 
-
 public class Tokenizer {
 
     private final InputStream mStream;

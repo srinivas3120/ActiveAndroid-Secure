@@ -16,15 +16,14 @@ package com.activeandroid;
  * limitations under the License.
  */
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
 import android.content.Context;
-
+import android.text.TextUtils;
 import com.activeandroid.serializer.TypeSerializer;
 import com.activeandroid.util.Log;
 import com.activeandroid.util.ReflectionUtils;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public class Configuration {
 
@@ -43,6 +42,11 @@ public class Configuration {
 	private List<Class<? extends TypeSerializer>> mTypeSerializers;
 	private int mCacheSize;
 
+	private String mSecDatabaseName;
+	private int mSecDatabaseVersion;
+	private ActiveAndroid.DbLang mDbLang= ActiveAndroid.DbLang.dbEng;
+	private String mNewPassword="";
+
 	//////////////////////////////////////////////////////////////////////////////////////
 	// CONSTRUCTORS
 	//////////////////////////////////////////////////////////////////////////////////////
@@ -59,6 +63,18 @@ public class Configuration {
 		return mContext;
 	}
 
+	public boolean secDatabase(){
+		return TextUtils.isEmpty(mSecDatabaseName)?false:true;
+	}
+
+	public ActiveAndroid.DbLang getDbLang(){
+		return mDbLang;
+	}
+
+	public String getNewPassword() {
+		return mNewPassword;
+	}
+
 	public String getDatabaseName() {
 		return mDatabaseName;
 	}
@@ -66,7 +82,15 @@ public class Configuration {
 	public int getDatabaseVersion() {
 		return mDatabaseVersion;
 	}
-	
+
+	public String getSecDatabaseName() {
+		return mSecDatabaseName;
+	}
+
+	public int getSecDatabaseVersion() {
+		return mSecDatabaseVersion;
+	}
+
 	public String getSqlParser() {
 	    return mSqlParser;
 	}
@@ -102,9 +126,16 @@ public class Configuration {
 		private final static String AA_SERIALIZERS = "AA_SERIALIZERS";
 		private final static String AA_SQL_PARSER = "AA_SQL_PARSER";
 
+		private final static String AA_DB_NEW_PASSWORD = "AA_DB_NEW_PASSWORD";
+
+		private static final String AA_SEC_DB_NAME = "AA_SEC_DB_NAME";
+		private static final String AA_SEC_DB_VERSION = "AA_SEC_DB_VERSION";
+		private static final String AA_SEC_DEFAULT_DB_NAME = "Application_sec.db";
+
 		private static final int DEFAULT_CACHE_SIZE = 1024;
 		private static final String DEFAULT_DB_NAME = "Application.db";
 		private static final String DEFAULT_SQL_PARSER = SQL_PARSER_LEGACY;
+		private static ActiveAndroid.DbLang mDbLang;
 
 		//////////////////////////////////////////////////////////////////////////////////////
 		// PRIVATE MEMBERS
@@ -115,9 +146,13 @@ public class Configuration {
 		private Integer mCacheSize;
 		private String mDatabaseName;
 		private Integer mDatabaseVersion;
+		private String mSecDatabaseName;
+		private Integer mSecDatabaseVersion;
 		private String mSqlParser;
 		private List<Class<? extends Model>> mModelClasses;
 		private List<Class<? extends TypeSerializer>> mTypeSerializers;
+
+		private String mNewPassword;
 
 		//////////////////////////////////////////////////////////////////////////////////////
 		// CONSTRUCTORS
@@ -137,13 +172,33 @@ public class Configuration {
 			return this;
 		}
 
+		public Builder setNewPassword(String newPassword) {
+			mNewPassword = newPassword;
+			return this;
+		}
+
 		public Builder setDatabaseName(String databaseName) {
 			mDatabaseName = databaseName;
 			return this;
 		}
 
+		public Builder setDbLang(ActiveAndroid.DbLang dbLang) {
+			mDbLang = dbLang;
+			return this;
+		}
+
 		public Builder setDatabaseVersion(int databaseVersion) {
 			mDatabaseVersion = databaseVersion;
+			return this;
+		}
+
+		public Builder setSecDatabaseName(String databaseName) {
+			mSecDatabaseName = databaseName;
+			return this;
+		}
+
+		public Builder setSecDatabaseVersion(int databaseVersion) {
+			mSecDatabaseVersion = databaseVersion;
 			return this;
 		}
 		
@@ -204,6 +259,18 @@ public class Configuration {
 
 			Log.i("configuration.mDatabaseName  "+configuration.mDatabaseName);
 			// Get database name from meta-data
+
+			if(mDbLang!=null){
+				configuration.mDbLang=mDbLang;
+			}
+
+
+			if (mNewPassword != null) {
+				configuration.mNewPassword = mNewPassword;
+			} else {
+				configuration.mNewPassword = getMetaDataNewPasswordOrDefault();
+			}
+
 			if (mDatabaseName != null) {
 				configuration.mDatabaseName = mDatabaseName;
 			} else {
@@ -216,6 +283,22 @@ public class Configuration {
 				configuration.mDatabaseVersion = mDatabaseVersion;
 			} else {
 				configuration.mDatabaseVersion = getMetaDataDatabaseVersionOrDefault();
+			}
+
+			Log.i("configuration.mSecDatabaseName  "+configuration.mSecDatabaseName);
+			// Get database name from meta-data
+			if (mSecDatabaseName != null) {
+				configuration.mSecDatabaseName = mSecDatabaseName;
+			} else {
+				configuration.mSecDatabaseName = getMetaDataSecDatabaseNameOrDefault();
+			}
+
+			Log.i("configuration.mSecDatabaseVersion  "+configuration.mSecDatabaseVersion);
+			// Get database version from meta-data
+			if (mSecDatabaseVersion != null) {
+				configuration.mSecDatabaseVersion = mSecDatabaseVersion;
+			} else {
+				configuration.mSecDatabaseVersion = getMetaDataSecDatabaseVersionOrDefault();
 			}
 
 			// Get SQL parser from meta-data
@@ -254,6 +337,15 @@ public class Configuration {
 
 		// Meta-data methods
 
+		private String getMetaDataNewPasswordOrDefault() {
+			String aaPass = ReflectionUtils.getMetaData(mContext, AA_DB_NEW_PASSWORD);
+			Log.i("ReflectionUtils.getMetaData(mContext, AA_DB_NEW_PASSWORD): "+aaPass);
+			if (aaPass == null) {
+				aaPass = "";
+			}
+			return aaPass;
+		}
+
 		private String getMetaDataDatabaseNameOrDefault() {
 			String aaName = ReflectionUtils.getMetaData(mContext, AA_DB_NAME);
 			Log.i("ReflectionUtils.getMetaData(mContext, AA_DB_NAME): "+aaName);
@@ -267,6 +359,26 @@ public class Configuration {
 		private int getMetaDataDatabaseVersionOrDefault() {
 			Integer aaVersion = ReflectionUtils.getMetaData(mContext, AA_DB_VERSION);
 			Log.i("ReflectionUtils.getMetaData(mContext, AA_DB_VERSION): "+aaVersion);
+			if (aaVersion == null || aaVersion == 0) {
+				aaVersion = 1;
+			}
+
+			return aaVersion;
+		}
+
+		private String getMetaDataSecDatabaseNameOrDefault() {
+			String aaName = ReflectionUtils.getMetaData(mContext, AA_SEC_DB_NAME);
+			Log.i("ReflectionUtils.getMetaData(mContext, BB_DB_NAME): "+aaName);
+			if (aaName == null) {
+				aaName = AA_SEC_DEFAULT_DB_NAME;
+			}
+
+			return aaName;
+		}
+
+		private int getMetaDataSecDatabaseVersionOrDefault() {
+			Integer aaVersion = ReflectionUtils.getMetaData(mContext, AA_SEC_DB_VERSION);
+			Log.i("ReflectionUtils.getMetaData(mContext, BB_DB_VERSION): "+aaVersion);
 			if (aaVersion == null || aaVersion == 0) {
 				aaVersion = 1;
 			}

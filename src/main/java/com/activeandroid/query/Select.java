@@ -17,7 +17,6 @@ package com.activeandroid.query;
  */
 
 import android.text.TextUtils;
-
 import com.activeandroid.Model;
 
 public final class Select implements Sqlable {
